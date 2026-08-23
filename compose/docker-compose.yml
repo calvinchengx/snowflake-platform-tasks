@@ -1,7 +1,7 @@
 # Snowflake account emulator. Consumer-owned, pin from versions.env.
 services:
   snowflake:
-    image: ghcr.io/calvinchengx/snowflake-emulator:${SNOWFLAKE_EMULATOR_VERSION:?see versions.env}
+    image: ghcr.io/calvinchengx/snowflake-emulator:${SNOWFLAKE_EMULATOR_VERSION:?see versions.env}@${SNOWFLAKE_EMULATOR_DIGEST:?see versions.env}
     ports:
       - "18448:8448"
     volumes:

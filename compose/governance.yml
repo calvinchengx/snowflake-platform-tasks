@@ -21,7 +21,7 @@
 services:
   om-postgresql:
     profiles: [governance]
-    image: ghcr.io/calvinchengx/openmetadata-postgresql:${OPENMETADATA_VERSION:?see versions.env}
+    image: ghcr.io/calvinchengx/openmetadata-postgresql:${OPENMETADATA_VERSION:?see versions.env}@${OPENMETADATA_PG_DIGEST:?see versions.env}
     command: "--work_mem=10MB"
     environment:
       POSTGRES_USER: postgres
@@ -36,7 +36,7 @@ services:
 
   om-opensearch:
     profiles: [governance]
-    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:?see versions.env}
+    image: opensearchproject/opensearch:${OPENSEARCH_VERSION:?see versions.env}@${OPENSEARCH_DIGEST:?see versions.env}
     environment:
       - discovery.type=single-node
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
@@ -52,7 +52,7 @@ services:
 
   om-migrate:
     profiles: [governance]
-    image: ghcr.io/calvinchengx/openmetadata-server:${OPENMETADATA_VERSION:?see versions.env}
+    image: ghcr.io/calvinchengx/openmetadata-server:${OPENMETADATA_VERSION:?see versions.env}@${OPENMETADATA_SERVER_DIGEST:?see versions.env}
     command: "./bootstrap/openmetadata-ops.sh migrate"
     environment: &om_env
       DB_HOST: om-postgresql
@@ -68,7 +68,7 @@ services:
 
   openmetadata:
     profiles: [governance]
-    image: ghcr.io/calvinchengx/openmetadata-server:${OPENMETADATA_VERSION:?see versions.env}
+    image: ghcr.io/calvinchengx/openmetadata-server:${OPENMETADATA_VERSION:?see versions.env}@${OPENMETADATA_SERVER_DIGEST:?see versions.env}
     ports: ["${OM_PORT:-18586}:8585"]
     environment: *om_env
     depends_on:

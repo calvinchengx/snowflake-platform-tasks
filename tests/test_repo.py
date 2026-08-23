@@ -451,3 +451,44 @@ def test_the_committed_vendor_ports_match_what_the_generator_emits():
     assert committed == emitted, (
         "vendor-ports.json is stale; regenerate it (see this test's docstring)"
     )
+# --- digest pins ---------------------------------------------------------------
+#
+# Docker IGNORES the tag in `repo:tag@sha256:...` — the digest decides, silently.
+# A version bumped without its digest runs the OLD image under the NEW name.
+
+def test_every_image_in_every_compose_file_is_fetched_by_digest():
+    """Both files, and every `image:` line in them. Scoping this to a list
+    would pass the day a service is added and forgotten, which is exactly when
+    the pin is missing."""
+    for path in sorted((ROOT / "compose").glob("*.yml")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("image:"):
+                continue
+            assert "@${" in stripped and "_DIGEST" in stripped, (
+                f"{path.name}: pulled by tag alone: {stripped}")
+            assert ":-" not in stripped, f"{path.name}: a default version floats: {stripped}"
+
+
+def test_one_version_feeding_two_images_has_a_digest_for_each():
+    """OPENMETADATA_VERSION tags `openmetadata-postgresql` AND
+    `openmetadata-server` — different images, different digests. A single
+    OPENMETADATA_DIGEST would pin one and silently mis-pin the other."""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from digests import PINS
+
+    text = (ROOT / "versions.env").read_text(encoding="utf-8")
+    shared = [p for p, (_i, tag_var) in PINS.items() if tag_var == "OPENMETADATA_VERSION"]
+    assert len(shared) == 2, shared
+    seen = {re.search(rf"^{p}_DIGEST=(.+)$", text, re.M).group(1) for p in shared}
+    assert len(seen) == 2, f"two images share one digest: {seen}"
+
+
+def test_every_pin_has_a_version_and_a_digest():
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from digests import PINS
+
+    text = (ROOT / "versions.env").read_text(encoding="utf-8")
+    for prefix, (_image, tag_var) in PINS.items():
+        assert re.search(rf"^{tag_var}=.+$", text, re.M), tag_var
+        assert re.search(rf"^{prefix}_DIGEST=sha256:[0-9a-f]{{64}}$", text, re.M), prefix
