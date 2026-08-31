@@ -1,0 +1,39 @@
+version: 2
+
+# THERE WAS NO CONFIG HERE, AND THAT IS THE WHOLE DEFECT. Dependabot ran
+# anyway, because security updates need none, so this repository received
+# automated updates nobody had configured. On 19 August one of them exited
+# non-zero for a reason that is not a problem at all:
+#
+#   Checking if pyopenssl 26.4.0 needs updating
+#   no security update needed as pyopenssl is no longer vulnerable
+#   ... Dependabot encountered '1' error(s) during execution
+#
+# The alert was already fixed. Dependabot reports having nothing to do as an
+# error, and with no version-update schedule nothing ever ran again, so that
+# non-event stayed the workflow's conclusion for twelve days. There are zero
+# open alerts on this repository.
+#
+# Declaring the ecosystems gives the weekly run that supersedes a result like
+# that, instead of leaving it standing.
+updates:
+  # Python, uv-managed: one lockfile at the root. Dependabot reads
+  # pyproject.toml and uv.lock together. Grouped because the lock is mostly
+  # transitive dependencies, where a PR per package buries the one that matters.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      python:
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ['*']
