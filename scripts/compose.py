@@ -6,8 +6,8 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import time
 import sys
+import time
 from pathlib import Path
 
 PROJECT = "snowflake-tasks"
@@ -179,7 +179,8 @@ def wait_for_jobs(base: list[str], env: dict, rc: int) -> int:
 def one_shot_services(base: list[str], env: dict) -> set[str]:
     """Services compose declares `restart: no` -- steps, not servers."""
     out = subprocess.run(base + ["config", "--format", "json"],
-                         cwd=ROOT, env=env, capture_output=True, text=True)
+                         cwd=ROOT, env=env, capture_output=True, text=True,
+                         check=False)
     if out.returncode != 0:
         return set()
     try:
@@ -192,7 +193,8 @@ def one_shot_services(base: list[str], env: dict) -> set[str]:
 def service_states(base: list[str], env: dict):
     """{service: (state, exit_code)} for everything compose knows about."""
     ps = subprocess.run(base + ["ps", "-a", "--format", "json"],
-                        cwd=ROOT, env=env, capture_output=True, text=True)
+                        cwd=ROOT, env=env, capture_output=True, text=True,
+                        check=False)
     if ps.returncode != 0 or not ps.stdout.strip():
         return None
     states = {}

@@ -37,7 +37,7 @@ def digest_of(image: str, tag: str) -> str:
     out = subprocess.run(
         ["docker", "buildx", "imagetools", "inspect", f"{image}:{tag}",
          "--format", "{{.Manifest.Digest}}"],
-        capture_output=True, text=True)
+        capture_output=True, text=True, check=False)
     if out.returncode != 0 or not out.stdout.strip().startswith("sha256:"):
         raise SystemExit(f"cannot read digest for {image}:{tag}: "
                          f"{(out.stderr or out.stdout).strip()[:200]}")
@@ -45,7 +45,7 @@ def digest_of(image: str, tag: str) -> str:
 
 
 def value(text: str, var: str) -> str:
-    found = re.search(rf"^{var}=(.+)$", text, re.M)
+    found = re.search(rf"^{var}=(.+)$", text, re.MULTILINE)
     if not found:
         raise SystemExit(f"{var} not found in versions.env")
     return found.group(1).strip()
@@ -55,4 +55,4 @@ def rewrite(text: str, prefix: str, digest: str) -> tuple[str, str]:
     """Set one _DIGEST, returning the new text and what it was."""
     before = value(text, f"{prefix}_DIGEST")
     return re.sub(rf"^{prefix}_DIGEST=.*$", f"{prefix}_DIGEST={digest}",
-                  text, flags=re.M), before
+                  text, flags=re.MULTILINE), before
