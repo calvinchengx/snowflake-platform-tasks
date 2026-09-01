@@ -12,7 +12,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from digests import PINS, digest_of, rewrite, value  # noqa: E402
+from digests import PINS, digest_of, rewrite, value
 
 VERSIONS = pathlib.Path(__file__).resolve().parent.parent / "versions.env"
 

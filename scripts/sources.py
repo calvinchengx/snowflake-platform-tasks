@@ -122,15 +122,15 @@ def fragment(decl: dict, sources_dir: str, pins: dict) -> dict:
                 # the inverted test.
                 "healthcheck": {
                     "test": ["CMD-SHELL",
-                             f"wget -q -O /dev/null "
+                             (f"wget -q -O /dev/null "
                              f"--header='X-Api-Key: definitely-not-the-key' "
                              f"http://localhost:{v['port']}{v['health']} "
-                             f"&& exit 1 || exit 0"],
+                             f"&& exit 1 || exit 0")],
                     "interval": "10s", "timeout": "5s", "retries": 5,
                 } if v.get("health") else {
                     "test": ["CMD-SHELL",
-                             f"wget -q -O /dev/null http://localhost:{v['port']}/ "
-                             f"|| test $? -ne 4"],
+                             (f"wget -q -O /dev/null http://localhost:{v['port']}/ "
+                             f"|| test $? -ne 4")],
                     "interval": "10s", "timeout": "5s", "retries": 5,
                 },
             }
@@ -169,10 +169,10 @@ def fragment(decl: dict, sources_dir: str, pins: dict) -> dict:
                 # failure without it is librdkafka's `Host resolution failure`,
                 # which names the symptom and not the listener.
                 "command": ["redpanda", "start", "--mode=dev-container", "--smp=1",
-                            "--kafka-addr=INTERNAL://0.0.0.0:9092,"
-                            f"EXTERNAL://0.0.0.0:{ERP_BROKER_HOST_PORT}",
-                            f"--advertise-kafka-addr=INTERNAL://{broker}:9092,"
-                            f"EXTERNAL://localhost:{ERP_BROKER_HOST_PORT}"],
+                            ("--kafka-addr=INTERNAL://0.0.0.0:9092,"
+                            f"EXTERNAL://0.0.0.0:{ERP_BROKER_HOST_PORT}"),
+                            (f"--advertise-kafka-addr=INTERNAL://{broker}:9092,"
+                            f"EXTERNAL://localhost:{ERP_BROKER_HOST_PORT}")],
                 "ports": [f"{ERP_BROKER_HOST_PORT}:{ERP_BROKER_HOST_PORT}"],
                 "healthcheck": {"test": ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"],
                                 "interval": "5s", "timeout": "5s", "retries": 30},
@@ -226,11 +226,11 @@ def fragment(decl: dict, sources_dir: str, pins: dict) -> dict:
                     # package that was just there. And psycopg goes in AFTER
                     # fixtures.py, because that script calls `uv sync` itself.
                     "command": ["sh", "-c",
-                                "pip install --quiet uv && "
+                                ("pip install --quiet uv && "
                                 "uv sync --quiet && "
                                 "uv run --frozen --no-sync python scripts/fixtures.py && "
                                 "uv pip install --quiet 'psycopg[binary]' && "
-                                "uv run --frozen --no-sync python scripts/seed_erp.py"],
+                                "uv run --frozen --no-sync python scripts/seed_erp.py")],
                     "restart": "no",
                 }
         else:

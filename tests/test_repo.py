@@ -54,7 +54,7 @@ def test_makefile_survives_cmd_exe():
     text = (ROOT / "Makefile").read_text(encoding="utf-8")
     for bad in (" | ", " && ", " `", " rm "):
         for line in text.splitlines():
-            if line.startswith("#") or line.startswith("ifeq") or line.startswith("  SHELL"):
+            if line.startswith(("#", "ifeq", "  SHELL")):
                 continue
             if ":" in line and not line.startswith("\t") and not line.startswith(" "):
                 continue
@@ -135,7 +135,7 @@ def test_the_product_is_supplied_as_a_path():
     the property the split exists to remove.
     """
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
-    assert re.search(r"^PRODUCT \?= \./product$", makefile, re.M), (
+    assert re.search(r"^PRODUCT \?= \./product$", makefile, re.MULTILINE), (
         "PRODUCT must default to the ./product mount point"
     )
     assert "--directory $(PRODUCT)" in makefile, (
@@ -175,7 +175,7 @@ def test_the_stage_the_warehouse_mounts_is_the_one_the_product_writes():
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
     values = {}
     for var in ("PRODUCT_STAGE", "SNOWFLAKE_STAGES"):
-        m = re.search(rf"^export {var} := (.+)$", makefile, re.M)
+        m = re.search(rf"^export {var} := (.+)$", makefile, re.MULTILINE)
         assert m, f"{var} is not exported -- the product would fall back to its own guess"
         values[var] = m.group(1).strip()
     assert values["PRODUCT_STAGE"] == values["SNOWFLAKE_STAGES"], (
@@ -314,7 +314,7 @@ def test_the_compose_project_is_named_rather_than_inferred():
         "shares a project with any other platform whose compose file sits in a "
         "directory of the same name"
     )
-    m = re.search(r'^PROJECT = "([^"]+)"', src, re.M)
+    m = re.search(r'^PROJECT = "([^"]+)"', src, re.MULTILINE)
     assert m, "no PROJECT constant to pass to -p"
     assert m.group(1) != "compose", (
         "the project is named `compose`, which is the inferred name this exists "
@@ -480,7 +480,7 @@ def test_one_version_feeding_two_images_has_a_digest_for_each():
     text = (ROOT / "versions.env").read_text(encoding="utf-8")
     shared = [p for p, (_i, tag_var) in PINS.items() if tag_var == "OPENMETADATA_VERSION"]
     assert len(shared) == 2, shared
-    seen = {re.search(rf"^{p}_DIGEST=(.+)$", text, re.M).group(1) for p in shared}
+    seen = {re.search(rf"^{p}_DIGEST=(.+)$", text, re.MULTILINE).group(1) for p in shared}
     assert len(seen) == 2, f"two images share one digest: {seen}"
 
 
@@ -490,5 +490,5 @@ def test_every_pin_has_a_version_and_a_digest():
 
     text = (ROOT / "versions.env").read_text(encoding="utf-8")
     for prefix, (_image, tag_var) in PINS.items():
-        assert re.search(rf"^{tag_var}=.+$", text, re.M), tag_var
-        assert re.search(rf"^{prefix}_DIGEST=sha256:[0-9a-f]{{64}}$", text, re.M), prefix
+        assert re.search(rf"^{tag_var}=.+$", text, re.MULTILINE), tag_var
+        assert re.search(rf"^{prefix}_DIGEST=sha256:[0-9a-f]{{64}}$", text, re.MULTILINE), prefix
