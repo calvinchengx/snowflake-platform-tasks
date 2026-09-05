@@ -115,6 +115,8 @@ def main() -> int:
     rc = subprocess.call(cmd, cwd=ROOT, env=env)
     if args and args[0] == "up":
         rc = wait_for_jobs(cmd[:-len(args)], env, rc)
+        if rc != 0:
+            dump_failure(cmd[:-len(args)], env)
     return rc
 
 
@@ -208,6 +210,31 @@ def service_states(base: list[str], env: dict):
             return None
         states[svc.get("Service", "?")] = (svc.get("State", ""), svc.get("ExitCode", 0))
     return states
+
+
+def dump_failure(base: list[str], env: dict) -> None:
+    """What the containers said on the way down.
+
+    `compose up` resolves depends_on itself and reports only `dependency
+    failed to start` -- WHICH container, and nothing about why it exited. That
+    is how G48, a released emulator that did not boot in a sibling stack,
+    survived a release and three CI runs without a single line of diagnosis.
+    The logs exist at this moment and are gone as soon as anyone runs
+    `make down`, which CI does in its cleanup step.
+
+    `ps -a` first because it names which container died and with what code; the
+    logs then say what it said on the way out. Both are bounded (`--tail`) so a
+    noisy stack cannot bury the failure they exist to explain.
+
+    check=False throughout, and no return value: this runs on a path that is
+    already failing, and a diagnostic that can raise would replace the failure
+    it was called to explain.
+    """
+    print("platform: the stack did not come up. what the containers said:",
+          flush=True)
+    subprocess.run(base + ["ps", "-a"], cwd=ROOT, env=env, check=False)
+    subprocess.run(base + ["logs", "--no-color", "--tail=80"],
+                   cwd=ROOT, env=env, check=False)
 
 
 if __name__ == "__main__":
