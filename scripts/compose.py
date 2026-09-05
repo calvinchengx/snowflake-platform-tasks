@@ -57,7 +57,9 @@ def vendor_fragment() -> Path:
     out.write_text(
         subprocess.run(
             [sys.executable, str(ROOT / "scripts" / "sources.py"), str(decl), str(src)],
-            check=True, capture_output=True, text=True,
+            check=True,
+            capture_output=True,
+            text=True,
         ).stdout,
         encoding="utf-8",
     )
@@ -114,9 +116,9 @@ def main() -> int:
     os.chmod(env["SNOWFLAKE_STAGES"], 0o777)
     rc = subprocess.call(cmd, cwd=ROOT, env=env)
     if args and args[0] == "up":
-        rc = wait_for_jobs(cmd[:-len(args)], env, rc)
+        rc = wait_for_jobs(cmd[: -len(args)], env, rc)
         if rc != 0:
-            dump_failure(cmd[:-len(args)], env)
+            dump_failure(cmd[: -len(args)], env)
     return rc
 
 
@@ -154,8 +156,11 @@ def wait_for_jobs(base: list[str], env: dict, rc: int) -> int:
         if states is None:
             return rc
         pending = [j for j in jobs if states.get(j, ("", 0))[0] != "exited"]
-        failed = [f"{j}: exited {states[j][1]}" for j in jobs
-                  if states.get(j, ("", 0))[0] == "exited" and states[j][1] != 0]
+        failed = [
+            f"{j}: exited {states[j][1]}"
+            for j in jobs
+            if states.get(j, ("", 0))[0] == "exited" and states[j][1] != 0
+        ]
         if failed:
             print("compose: " + "; ".join(failed))
             return rc or 1
@@ -169,8 +174,11 @@ def wait_for_jobs(base: list[str], env: dict, rc: int) -> int:
     # A service that has exited 0 is fine whether or not compose declares it
     # `restart: no`. om-migrate does not, and flagging it broken for finishing
     # its job was this function's first mistake in the other direction.
-    broken = [f"{n}: {s} ({c})" for n, (s, c) in service_states(base, env).items()
-              if s not in ("running", "restarting") and not (s == "exited" and c == 0)]
+    broken = [
+        f"{n}: {s} ({c})"
+        for n, (s, c) in service_states(base, env).items()
+        if s not in ("running", "restarting") and not (s == "exited" and c == 0)
+    ]
     if broken:
         print("compose: " + "; ".join(broken))
         return rc
@@ -180,9 +188,14 @@ def wait_for_jobs(base: list[str], env: dict, rc: int) -> int:
 
 def one_shot_services(base: list[str], env: dict) -> set[str]:
     """Services compose declares `restart: no` -- steps, not servers."""
-    out = subprocess.run(base + ["config", "--format", "json"],
-                         cwd=ROOT, env=env, capture_output=True, text=True,
-                         check=False)
+    out = subprocess.run(
+        base + ["config", "--format", "json"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     if out.returncode != 0:
         return set()
     try:
@@ -194,9 +207,14 @@ def one_shot_services(base: list[str], env: dict) -> set[str]:
 
 def service_states(base: list[str], env: dict):
     """{service: (state, exit_code)} for everything compose knows about."""
-    ps = subprocess.run(base + ["ps", "-a", "--format", "json"],
-                        cwd=ROOT, env=env, capture_output=True, text=True,
-                        check=False)
+    ps = subprocess.run(
+        base + ["ps", "-a", "--format", "json"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     if ps.returncode != 0 or not ps.stdout.strip():
         return None
     states = {}
@@ -230,11 +248,11 @@ def dump_failure(base: list[str], env: dict) -> None:
     already failing, and a diagnostic that can raise would replace the failure
     it was called to explain.
     """
-    print("platform: the stack did not come up. what the containers said:",
-          flush=True)
-    subprocess.run(base + ["ps", "-a"], cwd=ROOT, env=env, check=False)
-    subprocess.run(base + ["logs", "--no-color", "--tail=80"],
-                   cwd=ROOT, env=env, check=False)
+    print("platform: the stack did not come up. what the containers said:", flush=True)
+    subprocess.run([*base, "ps", "-a"], cwd=ROOT, env=env, check=False)
+    subprocess.run(
+        [*base, "logs", "--no-color", "--tail=80"], cwd=ROOT, env=env, check=False
+    )
 
 
 if __name__ == "__main__":
