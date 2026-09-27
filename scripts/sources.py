@@ -77,7 +77,7 @@ def fragment(decl: dict, sources_dir: str, pins: dict) -> dict:
             host_port = HOST_BASE + http_index
             http_index += 1
             services[name] = {
-                "image": f"mokapi/mokapi:{pins['MOKAPI_VERSION']}",
+                "image": f"mirror.gcr.io/mokapi/mokapi:{pins['MOKAPI_VERSION']}",
                 # The dashboard retains every request AND its response body. For
                 # a 95 MB export that is a multi-hundred-MB copy per call, so the
                 # history is capped at one entry per API -- this flag exists
@@ -143,7 +143,7 @@ def fragment(decl: dict, sources_dir: str, pins: dict) -> dict:
             # something else entirely.
             db, broker, connect = f"{name}-db", f"{name}-broker", f"{name}-connect"
             services[db] = {
-                "image": f"postgres:{pins['POSTGRES_VERSION']}",
+                "image": f"mirror.gcr.io/library/postgres:{pins['POSTGRES_VERSION']}",
                 # LOGICAL replication, and the slots to hold it. Debezium reads
                 # the WAL; at the default `replica` level there is nothing in it
                 # for a decoder to read and the connector attaches to silence.
@@ -178,7 +178,7 @@ def fragment(decl: dict, sources_dir: str, pins: dict) -> dict:
                                 "interval": "5s", "timeout": "5s", "retries": 30},
             }
             services[connect] = {
-                "image": f"debezium/connect:{pins['DEBEZIUM_VERSION']}",
+                "image": f"mirror.gcr.io/debezium/connect:{pins['DEBEZIUM_VERSION']}",
                 "depends_on": {db: {"condition": "service_healthy"},
                                broker: {"condition": "service_healthy"}},
                 "environment": {
@@ -203,7 +203,7 @@ def fragment(decl: dict, sources_dir: str, pins: dict) -> dict:
                 # the stream is CAPTURED rather than described. It belongs to
                 # the sources repo; the platform only runs it.
                 services[f"{name}-seed"] = {
-                    "image": f"python:{pins.get('PYTHON_VERSION', '3.12')}-slim",
+                    "image": f"mirror.gcr.io/library/python:{pins.get('PYTHON_VERSION', '3.12')}-slim",
                     "depends_on": {db: {"condition": "service_healthy"},
                                    connect: {"condition": "service_healthy"}},
                     "environment": {
