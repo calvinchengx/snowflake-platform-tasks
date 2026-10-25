@@ -14,6 +14,9 @@ on:
     - cron: "0 6 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Verify the released emulator end to end
@@ -25,14 +28,14 @@ jobs:
       run:
         working-directory: snowflake-platform-tasks
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           path: snowflake-platform-tasks
       # THE PRODUCT THIS PLATFORM RUNS. It is checked out rather than named in
       # the Makefile, which holds no product identifier -- the property that
       # makes "a second product can use this platform unchanged" testable.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: calvinchengx/contoso-data-product-snowflake-tasks
           path: contoso-data-product-snowflake-tasks
@@ -43,7 +46,7 @@ jobs:
       #
       # It was missing until the split -- `make up` could not have succeeded in
       # this workflow since the four vendors were added.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: calvinchengx/contoso-sources
           path: contoso-sources
@@ -57,23 +60,23 @@ jobs:
       # green by editing another repository. A SHA is also what this workflow
       # already does for every third-party action. Move it deliberately, and
       # only when the family's numbers move.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: calvinchengx/contoso-data-product
           ref: 2cf7bae8a1e1f4a8cddd2cd5510d435e16febb3b
           path: contoso-data-product
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: calvinchengx/snowflake-emulator
           path: snowflake-emulator
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.12.3"
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
       - name: GHCR login
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
         working-directory: ${{ github.workspace }}
       - if: github.event_name == 'repository_dispatch'
         name: Point at the released version
@@ -88,8 +91,10 @@ jobs:
         # needs two bumps, and this is where a forgotten second one surfaces.
         run: |
           uv run --no-project python scripts/set_release.py \
-            "${{ github.event.client_payload.version }}"
+            "${GITHUB_EVENT_CLIENT_PAYLOAD_VERSION}"
           git --no-pager diff --stat versions.env
+        env:
+          GITHUB_EVENT_CLIENT_PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
       # THE BYTES, not just the declaration checked out above. compose.py
       # refuses without them, and that refusal is why this job went red the
       # first time the cell had vendors at all: mokapi does not fail on an
