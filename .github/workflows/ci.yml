@@ -20,7 +20,7 @@ jobs:
       run:
         working-directory: snowflake-platform-tasks
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: snowflake-platform-tasks
       # ONE SIBLING, AND IT IS NOT A RUNTIME DEPENDENCY. The rule this replaces
@@ -36,14 +36,14 @@ jobs:
       # declaration instead would be the duplicate this family refuses; a test
       # that SKIPPED without it would be worse still, because CI is the only
       # place the check matters and it would pass there by never running.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: calvinchengx/contoso-sources
           path: contoso-sources
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.12.3"
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
       - if: matrix.os == 'windows-latest'
